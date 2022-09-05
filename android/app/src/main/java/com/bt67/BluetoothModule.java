@@ -12,7 +12,6 @@ import android.os.Bundle;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 
 import com.facebook.react.bridge.Callback;
@@ -21,8 +20,6 @@ import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.WritableNativeMap;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Set;
 
 @RequiresApi(api = Build.VERSION_CODES.M)
@@ -31,6 +28,7 @@ public class BluetoothModule extends ReactContextBaseJavaModule {
     private static final int DISCOVER_REQUEST = 531;
     public BluetoothManager bluetoothManager;
     public BluetoothAdapter bluetoothAdapter;
+    Set<BluetoothDevice> pairedDevices;
 
     public static ReactApplicationContext reactContext;
     BluetoothModule(ReactApplicationContext context){
@@ -59,7 +57,7 @@ public class BluetoothModule extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void getPairedDevices(Callback callback) {
-        Set<BluetoothDevice> pairedDevices = bluetoothAdapter.getBondedDevices();
+        pairedDevices = bluetoothAdapter.getBondedDevices();
         WritableNativeMap reactPairedDevices = new WritableNativeMap();
 
         if (pairedDevices.size() > 0) {
@@ -129,9 +127,14 @@ public class BluetoothModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void ConnectThreadRun(BluetoothDevice device) {
-        ConnectThread obj = new ConnectThread(device);
-        obj.start();
+    public void ConnectThreadRun(String deviceAddress) {
+        for (BluetoothDevice device : pairedDevices) {
+            if(device.getAddress().equals(deviceAddress)){
+                ConnectThread obj = new ConnectThread(device);
+                obj.start();
+                break;
+            }
+        }
     }
 
     @ReactMethod

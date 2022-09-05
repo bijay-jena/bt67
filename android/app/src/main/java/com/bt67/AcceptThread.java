@@ -33,7 +33,7 @@ public class AcceptThread extends Thread {
         try {
             // MY_UUID is the app's UUID string, also used by the client code.
             tmp = bluetoothAdapter
-                    .listenUsingRfcommWithServiceRecord("UUID_NAME", UUID.randomUUID());
+                    .listenUsingRfcommWithServiceRecord("MY_UUID", UUID.randomUUID());
         } catch (IOException e) {
             Log.e(LOG_TAG, "Socket's listen() method failed", e);
         }

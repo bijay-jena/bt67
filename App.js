@@ -79,7 +79,7 @@ const App = () => {
   }
 
   const initiateConnection = () => {
-    BluetoothModule.ConnectThreadRun()
+    BluetoothModule.ConnectThreadRun("52:E3:38:6E:01:2E")
   }
 
   const acceptConnection = () => {
