@@ -55,10 +55,9 @@ const App = () => {
 
   const getPairedDevices = async () => {
     try {
-      BluetoothModule.getPairedDevices();
-      // const { PAIRED_DEVICES } = BluetoothModule.getConstants();
-      // console.log(DEFAULT_EVENT_NAME);
-      // console.log(`Check LogCat for Paired Devices! ${pairedDevices}`);
+      BluetoothModule.getPairedDevices((Devices) => {
+          console.log(Devices);
+      });
     } catch (e) {
       console.error("Paired Devices",e);
     }

@@ -15,9 +15,11 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 
+import com.facebook.react.bridge.Callback;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
+import com.facebook.react.bridge.WritableNativeMap;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -56,35 +58,26 @@ public class BluetoothModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public Set<BluetoothDevice> getPairedDevices() {
+    public void getPairedDevices(Callback callback) {
         Set<BluetoothDevice> pairedDevices = bluetoothAdapter.getBondedDevices();
+        WritableNativeMap reactPairedDevices = new WritableNativeMap();
 
         if (pairedDevices.size() > 0) {
             for (BluetoothDevice device : pairedDevices) {
                 String deviceName = device.getName();
                 String deviceHardwareAddress = device.getAddress();
                 Log.d(LOG_TAG,deviceName+" "+deviceHardwareAddress);
+                reactPairedDevices.putString(deviceName,deviceHardwareAddress);
             }
         }
-        return pairedDevices;
-    }
-
-    @Nullable
-    @Override
-    public Map<String, Object> getConstants() {
-        final Map<String, Object> constants = new HashMap<>();
-        constants.put("PAIRED_DEVICES", String.valueOf(getPairedDevices()));
-        return constants;
+        callback.invoke(reactPairedDevices);
     }
 
     @ReactMethod
     public void startBluetoothDeviceDiscovery() {
-        IntentFilter filterList = new IntentFilter(
-                String.valueOf(new Intent(BluetoothDevice.ACTION_FOUND)));
-        filterList.addAction(
-                String.valueOf(new Intent(BluetoothAdapter.ACTION_DISCOVERY_STARTED)));
-        filterList.addAction(
-                String.valueOf(new Intent(BluetoothAdapter.ACTION_DISCOVERY_FINISHED)));
+        IntentFilter filterList = new IntentFilter((BluetoothDevice.ACTION_FOUND));
+        filterList.addAction(BluetoothAdapter.ACTION_DISCOVERY_STARTED);
+        filterList.addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);
 
         reactContext.registerReceiver(receiver, filterList);
         bluetoothAdapter.startDiscovery();
