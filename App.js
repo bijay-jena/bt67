@@ -1,8 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   NativeModules,
   PermissionsAndroid,
-  Button
+  Button,
+  View,
+  Text,
+  TouchableHighlight,
+  TouchableOpacity
 } from 'react-native';
 
 const requestBluetoothPermission = async () => {
@@ -27,7 +31,7 @@ const requestBluetoothPermission = async () => {
   }
   try {
     const granted = await PermissionsAndroid.request(
-      PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
+      PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT,
       {
         title: "Bluetooth Permission",
         message:
@@ -47,6 +51,7 @@ const requestBluetoothPermission = async () => {
 };
 
 const App = () => {
+  const [deviceList, setDeviceList] = useState({})
   const { BluetoothModule } = NativeModules;
   const bluetoothSwitch = () => {
     BluetoothModule.bluetoothSwitch();
@@ -56,13 +61,13 @@ const App = () => {
   const getPairedDevices = async () => {
     try {
       BluetoothModule.getPairedDevices((Devices) => {
-          console.log(Devices);
+          console.log('DEVICVE LIST',Devices);
+          setDeviceList(Devices)
       });
     } catch (e) {
       console.error("Paired Devices",e);
     }
   }
-  
   const startBluetoothDeviceDiscovery = () => {
     BluetoothModule.startBluetoothDeviceDiscovery();
     console.log('Invoked Discovery');
@@ -85,6 +90,24 @@ const App = () => {
   const acceptConnection = () => {
     BluetoothModule.AcceptConnectionRun()
   }
+
+  const renderList = () => {
+    return (
+      Object.entries(deviceList).map(([key, value]) => {
+        return (
+        <TouchableOpacity onPress={()=>console.log(key)} style={{backgroundColor:'#841584', marginVertical:5, marginHorizontal:10, padding:10, borderRadius:20}}>
+        <View key={key} > 
+          <Text style={{color:'#fff'}}>
+          {key}
+          </Text>
+          </View>
+          </TouchableOpacity>
+          )
+      })
+    )
+
+  };
+
 
   return (
     <>
@@ -124,6 +147,7 @@ const App = () => {
         color="#841584"
         onPress={acceptConnection}
       />
+      {renderList()}
     </>
   );
 };
