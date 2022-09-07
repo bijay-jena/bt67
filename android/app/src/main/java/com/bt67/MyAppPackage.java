@@ -24,7 +24,7 @@ public class MyAppPackage implements ReactPackage {
     public List<NativeModule> createNativeModules(@NonNull ReactApplicationContext reactContext) {
         List<NativeModule> modules = new ArrayList<>();
 
-        modules.add(new BluetoothModule(reactContext));
+        modules.add(new bt());
 
         return modules;
     }
