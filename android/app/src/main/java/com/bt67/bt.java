@@ -12,6 +12,7 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 
 import com.facebook.react.bridge.Callback;
+import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.WritableNativeMap;
@@ -23,11 +24,17 @@ import java.util.Objects;
 import java.util.Set;
 
 public class bt extends ReactContextBaseJavaModule {
+    ReactApplicationContext reactContext;
+
     BluetoothAdapter bluetoothAdapter;
     Set<BluetoothDevice> pairedDevices;
     SendReceive sendReceive;
 
-    bt(){
+    String receivedMessage = "";
+
+    bt(ReactApplicationContext context){
+        super(context);
+        reactContext = context;
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if(!bluetoothAdapter.isEnabled()) {
             bluetoothAdapter.enable();
@@ -77,11 +84,15 @@ public class bt extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void sendMessage(String string, Callback callback) {
+    public void sendMessage(String string) {
         if(sendReceive!=null){
             sendReceive.write(string.getBytes());
-            callback.invoke(string);
         }
+    }
+
+    @ReactMethod
+    public void fetchMessage(Callback callback) {
+        callback.invoke(receivedMessage);
     }
 
     Handler handler = new Handler(Looper.getMainLooper(), msg -> {
@@ -100,8 +111,8 @@ public class bt extends ReactContextBaseJavaModule {
                 break;
             case Constants.STATE_MESSAGE_RECEIVED:
                 byte[] readBuff = (byte[]) msg.obj;
-                String tempMsg = new String(readBuff,0, msg.arg1);
-                Log.d(Constants.TAG,tempMsg); // send / receive
+                receivedMessage = new String(readBuff,0, msg.arg1);
+                Log.d(Constants.TAG,receivedMessage); // received Message
                 break;
         }
         return true;
@@ -147,6 +158,15 @@ public class bt extends ReactContextBaseJavaModule {
                 }
             }
         }
+
+        // Closes the connect socket and causes the thread to finish.
+        public void cancel() {
+            try {
+                serverSocket.close();
+            } catch (IOException e) {
+                Log.e(Constants.TAG, "Could not close the connect socket", e);
+            }
+        }
     }
 
     private class ClientClass extends Thread {
@@ -174,6 +194,15 @@ public class bt extends ReactContextBaseJavaModule {
                 Message message = Message.obtain();
                 message.what = Constants.STATE_CONNECTION_FAILED;
                 handler.sendMessage(message);
+            }
+        }
+
+        // Closes the client socket and causes the thread to finish.
+        public void cancel() {
+            try {
+                socket.close();
+            } catch (IOException e) {
+                Log.e(Constants.TAG, "Could not close the client socket", e);
             }
         }
     }
@@ -224,6 +253,15 @@ public class bt extends ReactContextBaseJavaModule {
                 outputStream.write(bytes);
             } catch (IOException e) {
                 e.printStackTrace();
+            }
+        }
+
+        // Call this method from the main activity to shut down the connection.
+        public void cancel() {
+            try {
+                bluetoothSocket.close();
+            } catch (IOException e) {
+                Log.e(Constants.TAG, "Could not close the connect socket", e);
             }
         }
     }

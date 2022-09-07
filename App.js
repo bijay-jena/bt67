@@ -51,7 +51,7 @@ import {
 
 const App = () => {
   const [text,setText] = useState('');
-  const [message,setMessage] = useState('');
+  const [str,setStr] = useState('');
   const [deviceList, setDeviceList] = useState({});
   const {bt} = NativeModules;
 
@@ -94,20 +94,17 @@ const App = () => {
     }
   };
 
-  const runServer = () => {
-    bt.runServer();
-  }
+  const listener = () => { bt.runServer(); }
 
-  const runClient = (deviceAddress) => {
-    bt.runClient(deviceAddress);
-  }
+  const runClient = (deviceAddress) => { bt.runClient(deviceAddress);}
 
-  const sendMessage = () => {
-    bt.sendMessage(text,
-      (msg) =>{
-        console.log(msg);
-      });
-    // console.log(text);
+  const sendMessage = () => { bt.sendMessage(text); }
+
+  const fetchMessage = () => {
+    bt.fetchMessage((msg)=>{
+      console.log(msg);
+      setStr(msg);
+    })
   }
 
   const renderList = () => {
@@ -142,11 +139,12 @@ const App = () => {
       <Button title="Initiate Connection" color="#841584" onPress={initiateConnection} /> */}
 
       <Button title="Get Paired Devices" onPress={getPairedDevices} />
-      <Button title="Run Server" color="#841584" onPress={runServer} />
+      <Button title="Listener" color="#841584" onPress={listener} />
+      <Button title="Receive" onPress={fetchMessage} />
 
       {renderList()}
       
-      <Text defaultValue={message}></Text>
+      <Text defaultValue={str}/>
       <TextInput
         style={{height: 40}}
         placeholder="Type Message!"
