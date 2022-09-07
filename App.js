@@ -1,53 +1,5 @@
-import React, {useState} from 'react';
-import {
-  NativeModules,
-  PermissionsAndroid,
-  Button,
-  View,
-  Text,
-  TouchableHighlight,
-  TouchableOpacity,
-  TextInput,
-} from 'react-native';
-
-// const requestBluetoothPermission = async () => {
-//   try {
-//     const granted = await PermissionsAndroid.request(
-//       PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-//       {
-//         title: 'Bluetooth Permission',
-//         message: 'Access Fine Location',
-//         buttonNegative: 'Deny',
-//         buttonPositive: 'Accept',
-//       },
-//     );
-//     if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-//       console.log('You can use the Bluetooth');
-//     } else {
-//       console.log('Permission denied');
-//     }
-//   } catch (err) {
-//     console.warn(err);
-//   }
-//   try {
-//     const granted = await PermissionsAndroid.request(
-//       PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT,
-//       {
-//         title: 'Bluetooth Permission',
-//         message: 'Access Fine Location',
-//         buttonNegative: 'Deny',
-//         buttonPositive: 'Accept',
-//       },
-//     );
-//     if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-//       console.log('You can use the Bluetooth');
-//     } else {
-//       console.log('Permission denied');
-//     }
-//   } catch (err) {
-//     console.warn(err);
-//   }
-// };
+import React, { useEffect, useState } from 'react';
+import { NativeModules, Button, View, Text, TouchableOpacity, TextInput } from 'react-native';
 
 const App = () => {
   const [text,setText] = useState('');
@@ -55,33 +7,14 @@ const App = () => {
   const [deviceList, setDeviceList] = useState({});
   const {bt} = NativeModules;
 
-  // const bluetoothSwitch = () => {
-  //   BluetoothModule.bluetoothSwitch();
-  //   console.log('Bluetooth Switched!');
-  // };
-
-  // const startBluetoothDeviceDiscovery = () => {
-  //   BluetoothModule.startBluetoothDeviceDiscovery();
-  //   console.log('Invoked Discovery');
-  // };
-
-  // const cancelDeviceDiscovery = () => {
-  //   BluetoothModule.cancelDeviceDiscovery();
-  //   console.log('Cancelled Discovery');
-  // };
-
-  // const enableDeviceDiscoverability = () => {
-  //   BluetoothModule.enableDeviceDiscoverability();
-  //   console.log('Device is Discoverable now');
-  // };
-
-  //   const acceptConnection = () => {
-  //       BluetoothModule.AcceptThreadRun();
-  //   };
-
-  // const initiateConnection = (deviceAddress) => {
-  //   BluetoothModule.ConnectThreadRun(deviceAddress);
-  // };
+  useEffect(()=>{
+    setTimeout(()=>{
+      bt.fetchMessage((msg)=>{
+        console.log(msg);
+        setStr(msg);
+      })},
+      1000);
+  },[])
 
   const getPairedDevices = async () => {
     try {
@@ -94,13 +27,13 @@ const App = () => {
     }
   };
 
-  const listener = () => { bt.runServer(); }
+  const acceptConnection = () => { bt.runServer(); }
 
-  const runClient = (deviceAddress) => { bt.runClient(deviceAddress);}
+  const initiateConnection = (deviceAddress) => { bt.runClient(deviceAddress);}
 
   const sendMessage = () => { bt.sendMessage(text); }
 
-  const fetchMessage = () => {
+  const getMessage = () => {
     bt.fetchMessage((msg)=>{
       console.log(msg);
       setStr(msg);
@@ -111,9 +44,9 @@ const App = () => {
     return Object.entries(deviceList).map(([key, value]) => {
       return (
         <TouchableOpacity
-          onPress={() => runClient(key)}
+          onPress={() => initiateConnection(key)}
           style={{
-            backgroundColor: '#841584',
+            backgroundColor: '#153484',
             marginVertical: 5,
             marginHorizontal: 10,
             padding: 10,
@@ -129,29 +62,12 @@ const App = () => {
 
   return (
     <>
-
-      {/* <Button title="Request Permissions" onPress={requestBluetoothPermission} />
-      <Button title="Switch Bluetooth" color="#841584" onPress={bluetoothSwitch} />
-      <Button title="Enable Bluetooth Discoverability" color="#841584" onPress={enableDeviceDiscoverability} />
-      <Button title="Start Bluetooth Discovery" onPress={startBluetoothDeviceDiscovery} />
-      <Button title="Cancel Bluetooth Discovery" color="#841584" onPress={cancelDeviceDiscovery} />
-      <Button title="Accept Connection" onPress={acceptConnection} />
-      <Button title="Initiate Connection" color="#841584" onPress={initiateConnection} /> */}
-
-      <Button title="Get Paired Devices" onPress={getPairedDevices} />
-      <Button title="Listener" color="#841584" onPress={listener} />
-      <Button title="Receive" onPress={fetchMessage} />
-
+      <Button title = "Get Paired Devices"                onPress={getPairedDevices} />
+      <Button title = "Accept Connection" color="#841584" onPress={acceptConnection} />
+      <Button title =  "Receive Message"                  onPress={getMessage} />
       {renderList()}
-      
-      <Text defaultValue={str}/>
-      <TextInput
-        style={{height: 40}}
-        placeholder="Type Message!"
-        onChangeText={newText => setText(newText)}
-        defaultValue={text}
-      />
-      
+      <Text>{str}</Text>
+      <TextInput style={{height: 40}} placeholder="Message!" onChangeText={newText => setText(newText)} value={text} />
       <Button title="Send Message" onPress={sendMessage} />
     </>
   );

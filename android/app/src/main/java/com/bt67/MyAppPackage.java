@@ -25,6 +25,7 @@ public class MyAppPackage implements ReactPackage {
         List<NativeModule> modules = new ArrayList<>();
 
         modules.add(new bt(reactContext));
+        modules.add(new discover(reactContext));
 
         return modules;
     }
