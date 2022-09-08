@@ -17,11 +17,15 @@ const {bt} = NativeModules;
 Creating the Native Module (Calling the constructor) enables the bluetooth
 ## Functions Available with Example
 
-### bt.enable()
+### bt.enable() / bt.enable(Callback callback)
 
 ```Javascript
 const enableBluetooth = () => {
   bt.enable();
+  // bt.enable(
+  // (bluetoothStatus) => {
+  //   console.log(bluetoothStatus);
+  // );
 };
 ```
 
