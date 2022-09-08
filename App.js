@@ -7,7 +7,15 @@ const App = () => {
   const [deviceList, setDeviceList] = useState({});
   const {bt} = NativeModules;
 
-    setInterval(()=>{bt.getMessage((msg)=>{setStr(msg)})},100);
+  setInterval(()=>{bt.getMessage((msg)=>{setStr(msg)})},100);
+
+  const enableBluetooth = () => {
+    bt.enable(
+      (bluetoothStatus) => {
+        console.log(bluetoothStatus);
+      }
+    );
+  };
 
   const getPairedDevices = async () => {
     try {
@@ -22,7 +30,7 @@ const App = () => {
 
   const acceptConnection = () => { bt.acceptConnection(); }
 
-  const initiateConnection = (deviceAddress) => { bt.initiateConnection(deviceAddress);}
+  const initiateConnection = (deviceAddress) => { bt.initiateConnection(deviceAddress); }
 
   const sendMessage = () => { bt.sendMessage(text); }
 
@@ -55,13 +63,29 @@ const App = () => {
 
   return (
     <>
-      <Button title = "Get Paired Devices"                onPress={getPairedDevices} />
-      <Button title = "Accept Connection" color="#841584" onPress={acceptConnection} />
-      <Button title =  "Receive Message"                  onPress={getMessage} />
+      <Button
+        title =  "Enable Bluetooth"
+        color="#841584"
+        onPress={enableBluetooth} />
+      <Button
+        title = "Get Paired Devices"
+        onPress={getPairedDevices} />
+      <Button
+        title = "Accept Connection"
+        color="#841584" onPress={acceptConnection} />
+      <Button
+        title =  "Receive Message"
+        onPress={getMessage} />
       {renderList()}
       <Text>{str}</Text>
-      <TextInput style={{height: 40}} placeholder="Message!" onChangeText={newText => setText(newText)} value={text} />
-      <Button title="Send Message" onPress={sendMessage} />
+      <TextInput
+        style={{height: 40}}
+        placeholder="Message!"
+        onChangeText={newText =>
+          setText(newText)}
+        value={text} />
+      <Button title="Send Message"
+              onPress={sendMessage} />
     </>
   );
 };

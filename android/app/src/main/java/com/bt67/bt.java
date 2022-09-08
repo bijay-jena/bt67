@@ -46,6 +46,21 @@ public class bt extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
+    public void enable(){
+        if(!bluetoothAdapter.isEnabled()){
+            bluetoothAdapter.enable();
+        }
+    }
+
+    @ReactMethod
+    public void enable(Callback callback){
+        if(!bluetoothAdapter.isEnabled()){
+            bluetoothAdapter.enable();
+            callback.invoke("Enabled Bluetooth");
+        }
+    }
+
+    @ReactMethod
     public void getPairedDevices(Callback callback) {
         pairedDevices = bluetoothAdapter.getBondedDevices();
         WritableNativeMap reactPairedDevices = new WritableNativeMap();
