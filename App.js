@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { NativeModules, Button, View, Text, TouchableOpacity, TextInput } from 'react-native';
 
 const App = () => {
@@ -7,14 +7,7 @@ const App = () => {
   const [deviceList, setDeviceList] = useState({});
   const {bt} = NativeModules;
 
-  useEffect(()=>{
-    setTimeout(()=>{
-      bt.fetchMessage((msg)=>{
-        console.log(msg);
-        setStr(msg);
-      })},
-      1000);
-  },[])
+    setInterval(()=>{bt.getMessage((msg)=>{setStr(msg)})},100);
 
   const getPairedDevices = async () => {
     try {
@@ -27,14 +20,14 @@ const App = () => {
     }
   };
 
-  const acceptConnection = () => { bt.runServer(); }
+  const acceptConnection = () => { bt.acceptConnection(); }
 
-  const initiateConnection = (deviceAddress) => { bt.runClient(deviceAddress);}
+  const initiateConnection = (deviceAddress) => { bt.initiateConnection(deviceAddress);}
 
   const sendMessage = () => { bt.sendMessage(text); }
 
   const getMessage = () => {
-    bt.fetchMessage((msg)=>{
+    bt.getMessage((msg)=>{
       console.log(msg);
       setStr(msg);
     })

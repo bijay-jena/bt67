@@ -25,11 +25,9 @@ import java.util.Set;
 
 public class bt extends ReactContextBaseJavaModule {
     ReactApplicationContext reactContext;
-
     BluetoothAdapter bluetoothAdapter;
     Set<BluetoothDevice> pairedDevices;
     SendReceive sendReceive;
-
     String receivedMessage = "";
 
     bt(ReactApplicationContext context){
@@ -64,13 +62,13 @@ public class bt extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void runServer() {
+    public void acceptConnection() {
         ServerClass server = new ServerClass();
         server.start();
     }
 
     @ReactMethod
-    public void runClient(String deviceHardwareAddress) {
+    public void initiateConnection(String deviceHardwareAddress) {
         if (pairedDevices.size() > 0) {
             for (BluetoothDevice device : pairedDevices) {
                 if (Objects.equals(deviceHardwareAddress, device.getAddress())) {
@@ -91,7 +89,7 @@ public class bt extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void fetchMessage(Callback callback) {
+    public void getMessage(Callback callback) {
         callback.invoke(receivedMessage);
     }
 
