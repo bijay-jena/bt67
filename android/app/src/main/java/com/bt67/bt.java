@@ -54,6 +54,27 @@ public class bt extends ReactContextBaseJavaModule {
         }
 
         IntentFilter scanIntentFilter = new IntentFilter(BluetoothAdapter.ACTION_SCAN_MODE_CHANGED);
+        BroadcastReceiver scanModeReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, @NonNull Intent intent) {
+                String action = intent.getAction();
+                if (action.equals(BluetoothAdapter.ACTION_SCAN_MODE_CHANGED)) {
+                    int modeValue = intent.getIntExtra(
+                            BluetoothAdapter.EXTRA_SCAN_MODE, BluetoothAdapter.ERROR);
+                    if (modeValue == BluetoothAdapter.SCAN_MODE_CONNECTABLE) {
+                        Log.d(Constants.TAG, "Device can receive connection");
+                    } else if (modeValue == BluetoothAdapter.SCAN_MODE_CONNECTABLE_DISCOVERABLE) {
+                        Log.d(Constants.TAG,
+                                "Device is Discoverable and can receive connection");
+                    } else if (modeValue == BluetoothAdapter.SCAN_MODE_NONE) {
+                        Log.d(Constants.TAG,
+                                "Device is NOT Discoverable and can't receive connection");
+                    } else {
+                        Log.d(Constants.TAG, "ERROR");
+                    }
+                }
+            }
+        };
         reactContext.registerReceiver(scanModeReceiver,scanIntentFilter);
     }
 
@@ -65,29 +86,10 @@ public class bt extends ReactContextBaseJavaModule {
                 BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
                 if(device.getName()!=null) {
                     discoveredDevices.add(device);
-                    Log.d(Constants.TAG, "Found: " + String.valueOf(device.getName()));
-                    reactDiscoveredDevices.putString(String.valueOf(device.getAddress()), String.valueOf(device.getName()));
-                }
-            }
-        }
-    };
-
-    BroadcastReceiver scanModeReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, @NonNull Intent intent) {
-            String action = intent.getAction();
-            if(action.equals(BluetoothAdapter.ACTION_SCAN_MODE_CHANGED)) {
-                int modeValue = intent.getIntExtra(
-                        BluetoothAdapter.EXTRA_SCAN_MODE,BluetoothAdapter.ERROR);
-                if (modeValue == BluetoothAdapter.SCAN_MODE_CONNECTABLE) {
-                    Log.d(Constants.TAG,"Device can receive connection");
-                } else if (modeValue == BluetoothAdapter.SCAN_MODE_CONNECTABLE_DISCOVERABLE) {
-                    Log.d(Constants.TAG,"Device is Discoverable and can receive connection");
-                } else if (modeValue == BluetoothAdapter.SCAN_MODE_NONE) {
-                    Log.d(Constants.TAG,
-                            "Device is NOT Discoverable and can't receive connection");
-                } else {
-                    Log.d(Constants.TAG,"ERROR");
+                    String deviceName = device.getName();
+                    String deviceHardwareAddress = device.getAddress();
+                    Log.d(Constants.TAG, "Found: " + deviceName);
+                    reactDiscoveredDevices.putString(deviceHardwareAddress, deviceName);
                 }
             }
         }
@@ -97,6 +99,15 @@ public class bt extends ReactContextBaseJavaModule {
     @Override
     public String getName() {
         return "bt";
+    }
+
+    public void cancelDiscovery() {
+        if (bluetoothAdapter.isDiscovering()) {
+            Log.d(Constants.TAG,"Is Discovering");
+            bluetoothAdapter.cancelDiscovery();
+        } else {
+            Log.d(Constants.TAG,"Not Discovering");
+        }
     }
 
     @ReactMethod
@@ -137,10 +148,7 @@ public class bt extends ReactContextBaseJavaModule {
         reactDiscoveredDevices = Arguments.createMap();
 
         // If we're already discovering, stop it
-        if (bluetoothAdapter.isDiscovering()) {
-            Log.d(Constants.TAG,"Already Discovering");
-            bluetoothAdapter.cancelDiscovery();
-        }
+        cancelDiscovery();
 
         // Request discover from BluetoothAdapter
         if(bluetoothAdapter != null && bluetoothAdapter.isEnabled()) {
@@ -150,6 +158,8 @@ public class bt extends ReactContextBaseJavaModule {
             } else {
                 callback.invoke("Discovery Failed !!!");
             }
+        } else {
+            callback.invoke("Enable Bluetooth");
         }
 
         IntentFilter intentActionFound = new IntentFilter(BluetoothDevice.ACTION_FOUND);
@@ -158,6 +168,7 @@ public class bt extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void getDiscoveredDevices(@NonNull Callback callback) {
+        cancelDiscovery();
         callback.invoke(reactDiscoveredDevices);
     }
 

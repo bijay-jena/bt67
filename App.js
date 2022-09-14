@@ -50,7 +50,7 @@ const App = () => {
   }
 
   const makeDeviceDiscoverable = () => {
-    bt.makeDeviceDiscoverable(120,
+    bt.makeDeviceDiscoverable(15,
       (cb) => {
         console.log(cb);
       });
@@ -104,7 +104,7 @@ const App = () => {
       <Button title = {   "Enable Bluetooth"   }  onPress={    enableBluetooth   }  color="#841584" />
       <Button title = {  "Get Paired Devices"  }  onPress={   getPairedDevices   } />
       <Button title = {   "Accept Connection"  }  onPress={   acceptConnection   }  color="#841584" />
-      <Button title = {   "Receive Message"    }  onPress={      getMessage      } />
+      {/* <Button title = {   "Receive Message"    }  onPress={      getMessage      } /> */}
       <Button title=  {   "Start Discovery"    }  onPress={   discoverDevices    } color="#841584" />
       <Button title=  {  "Make Discoverable"   }  onPress={makeDeviceDiscoverable} />
       <Button title=  {"Get Discovered Devices"}  onPress={ getDiscoveredDevices } color="#841584" />
