@@ -104,7 +104,7 @@ public class bt extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void getMessage(Callback callback) {
+    public void getMessage(@NonNull Callback callback) {
         callback.invoke(receivedMessage);
     }
 
@@ -185,7 +185,7 @@ public class bt extends ReactContextBaseJavaModule {
     private class ClientClass extends Thread {
         private BluetoothSocket socket;
 
-        public ClientClass (BluetoothDevice device) {
+        public ClientClass (@NonNull BluetoothDevice device) {
             try {
                 socket = device.createRfcommSocketToServiceRecord(Constants.MY_UUID);
             } catch (IOException e) {

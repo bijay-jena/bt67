@@ -5,17 +5,11 @@ const App = () => {
   const [text,setText] = useState('');
   const [str,setStr] = useState('');
   const [deviceList, setDeviceList] = useState({});
-  const {bt} = NativeModules;
+  const { bt } = NativeModules;
 
   setInterval(()=>{bt.getMessage((msg)=>{setStr(msg)})},100);
 
-  const enableBluetooth = () => {
-    bt.enable(
-      (bluetoothStatus) => {
-        console.log(bluetoothStatus);
-      }
-    );
-  };
+  const enableBluetooth = () => { bt.enable( (bluetoothStatus) => { console.log(bluetoothStatus); } ); };
 
   const getPairedDevices = async () => {
     try {
@@ -34,14 +28,9 @@ const App = () => {
 
   const sendMessage = () => { bt.sendMessage(text); }
 
-  const getMessage = () => {
-    bt.getMessage((msg)=>{
-      console.log(msg);
-      setStr(msg);
-    })
-  }
+  const getMessage = () => { bt.getMessage((msg)=>{ setStr(msg); }) }
 
-  const renderList = () => {
+  const renderPairedDeviceList = () => {
     return Object.entries(deviceList).map(([key, value]) => {
       return (
         <TouchableOpacity
@@ -76,7 +65,7 @@ const App = () => {
       <Button
         title =  "Receive Message"
         onPress={getMessage} />
-      {renderList()}
+      {renderPairedDeviceList()}
       <Text>{str}</Text>
       <TextInput
         style={{height: 40}}
