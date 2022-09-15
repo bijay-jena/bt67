@@ -1,6 +1,6 @@
 {
   "name": "bt67",
-  "version": "0.0.1",
+  "version": "0.2.0-rc1",
   "private": true,
   "scripts": {
     "android": "react-native run-android",
