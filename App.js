@@ -6,6 +6,7 @@ const App = () => {
   const [str,setStr] = useState('');
   const [deviceList, setDeviceList] = useState({});
   const [discoveredDeviceList, setDiscoveredDeviceList] = useState({});
+  const [disable,setDisable] = useState(true);
   const { bt } = NativeModules;
 
   setInterval(()=>{bt.getMessage((msg)=>{setStr(msg)})},100);
@@ -38,6 +39,7 @@ const App = () => {
         console.log(cb);
       }
     );
+    setDisable(false);
   }
 
   const getDiscoveredDevices = () => {
@@ -47,6 +49,7 @@ const App = () => {
         setDiscoveredDeviceList(devices);
       }
     );
+    setDisable(true);
   }
 
   const makeDeviceDiscoverable = () => {
@@ -101,13 +104,13 @@ const App = () => {
 
   return (
     <ScrollView>
-      <Button title = {   "Enable Bluetooth"   }  onPress={    enableBluetooth   }  color="#841584" />
+      <Button title = {   "Enable Bluetooth"   }  onPress={    enableBluetooth   }  color="#841584"  />
       <Button title = {  "Get Paired Devices"  }  onPress={   getPairedDevices   } />
-      <Button title = {   "Accept Connection"  }  onPress={   acceptConnection   }  color="#841584" />
+      <Button title = {   "Accept Connection"  }  onPress={   acceptConnection   }  color="#841584"  />
       {/* <Button title = {   "Receive Message"    }  onPress={      getMessage      } /> */}
-      <Button title=  {   "Start Discovery"    }  onPress={   discoverDevices    } color="#841584" />
-      <Button title=  {  "Make Discoverable"   }  onPress={makeDeviceDiscoverable} />
-      <Button title=  {"Get Discovered Devices"}  onPress={ getDiscoveredDevices } color="#841584" />
+      <Button title=  {   "Start Discovery"    }  onPress={   discoverDevices    } />
+      <Button title=  {  "Make Discoverable"   }  onPress={makeDeviceDiscoverable}  color="#841584"  />
+      <Button title=  {"Get Discovered Devices"}  onPress={ getDiscoveredDevices }  disabled={disable} />
       {renderDiscoveredDeviceList()}
       {renderPairedDeviceList()}
       <Text>{str}</Text>
