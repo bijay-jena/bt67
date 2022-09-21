@@ -57,6 +57,7 @@ const App = () => {
       (cb) => {
         console.log(cb);
       });
+    bt.acceptConnection();
   }
 
   const initiateDiscoveredConnection = (deviceAddress) => { bt.initiateDiscoveredConnection(deviceAddress); }
@@ -105,8 +106,8 @@ const App = () => {
   return (
     <ScrollView>
       <Button title = {   "Enable Bluetooth"   }  onPress={    enableBluetooth   }  color="#841584"  />
-      <Button title = {  "Get Paired Devices"  }  onPress={   getPairedDevices   } />
-      <Button title = {   "Accept Connection"  }  onPress={   acceptConnection   }  color="#841584"  />
+      {/* <Button title = {  "Get Paired Devices"  }  onPress={   getPairedDevices   } />
+      <Button title = {   "Accept Connection"  }  onPress={   acceptConnection   }  color="#841584"  /> */}
       {/* <Button title = {   "Receive Message"    }  onPress={      getMessage      } /> */}
       <Button title=  {   "Start Discovery"    }  onPress={   discoverDevices    } />
       <Button title=  {  "Make Discoverable"   }  onPress={makeDeviceDiscoverable}  color="#841584"  />

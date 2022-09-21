@@ -35,6 +35,7 @@ public class bt extends ReactContextBaseJavaModule {
     ReactApplicationContext reactContext;
     BluetoothAdapter bluetoothAdapter;
     Set<BluetoothDevice> pairedDevices;
+    String connectionStatus = "";
 
     // For Discovery
     ArrayList<BluetoothDevice> discoveredDevices;
@@ -226,19 +227,33 @@ public class bt extends ReactContextBaseJavaModule {
         callback.invoke(receivedMessage);
     }
 
+    @ReactMethod
+    public void getConnectionStatus(@NonNull Callback callback) {
+        if(bluetoothAdapter.isEnabled()){
+            callback.invoke(connectionStatus);
+        } else {
+            callback.invoke("Bluetooth is off");
+            sendReceive.cancel();
+        }
+    }
+
     Handler handler = new Handler(Looper.getMainLooper(), msg -> {
         switch (msg.what) {
             case Constants.STATE_LISTENING:
-                Log.d(Constants.TAG,"Status Listening");
+                connectionStatus = "Status Listening";
+                Log.d(Constants.TAG,connectionStatus);
                 break;
             case Constants.STATE_CONNECTING:
-                Log.d(Constants.TAG,"Status Connecting");
+                connectionStatus = "Status Connecting";
+                Log.d(Constants.TAG,connectionStatus);
                 break;
             case Constants.STATE_CONNECTED:
-                Log.d(Constants.TAG,"Status Connected");
+                connectionStatus = "Status Connected";
+                Log.d(Constants.TAG,connectionStatus);
                 break;
             case Constants.STATE_CONNECTION_FAILED:
-                Log.d(Constants.TAG,"Status Connection Failed");
+                connectionStatus = "Status Connection Failed";
+                Log.d(Constants.TAG,connectionStatus);
                 break;
             case Constants.STATE_MESSAGE_RECEIVED:
                 byte[] readBuff = (byte[]) msg.obj;
