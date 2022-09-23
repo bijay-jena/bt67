@@ -1,69 +1,78 @@
-import React, { useState } from 'react';
-import { NativeModules, Button, View, Text, TouchableOpacity, TextInput, ScrollView } from 'react-native';
+import React, {useState} from 'react';
+import {
+  NativeEventEmitter,
+  NativeModules,
+  Button,
+  View,
+  Text,
+  TouchableOpacity,
+  TextInput,
+  ScrollView,
+} from 'react-native';
 
 const App = () => {
-  const [text,setText] = useState('');
-  const [str,setStr] = useState('');
-  const [deviceList, setDeviceList] = useState({});
+  const [text, setText] = useState('');
+  const [str, setStr] = useState('');
   const [discoveredDeviceList, setDiscoveredDeviceList] = useState({});
-  const [disable,setDisable] = useState(true);
-  const { bt } = NativeModules;
+  const [disable, setDisable] = useState(true);
+  const {bt} = NativeModules;
 
-  setInterval(()=>{bt.getMessage((msg)=>{setStr(msg)})},100);
+  useEffect(() => {
+    const eventEmitter = new NativeEventEmitter(NativeModules.bt);
+    eventListener = eventEmitter.addListener('receivedMessageEvent', e => {
+      console.log(e.message);
+    });
+  }, []);
 
-  const enableBluetooth = () => { bt.enable( (bluetoothStatus) => { console.log(bluetoothStatus); } ); };
+  setInterval(() => {
+    bt.getMessage(msg => {
+      setStr(msg);
+    });
+  }, 100);
 
-  const getPairedDevices = async () => {
-    try {
-      bt.getPairedDevices ( Devices => {
-        console.log('Device List', Devices);
-        setDeviceList(Devices);
-      });
-    } catch (e) {
-      console.error('getPairedDevices', e);
-    }
+  const enableBluetooth = () => {
+    bt.enable(bluetoothStatus => {
+      console.log(bluetoothStatus);
+    });
   };
 
-  const acceptConnection = () => { bt.acceptConnection(); }
-
-  const initiateConnection = (deviceAddress) => { bt.initiateConnection(deviceAddress); }
-
-  const sendMessage = () => { bt.sendMessage(text); }
-
-  const getMessage = () => { bt.getMessage((msg)=>{ setStr(msg); }) }
+  const sendMessage = () => {
+    bt.sendMessage(text);
+  };
 
   const discoverDevices = () => {
     bt.doDiscovery(
       // cb -> callback
-      (cb) => {
+      cb => {
         console.log(cb);
-      }
+      },
     );
     setDisable(false);
-  }
+  };
 
   const getDiscoveredDevices = () => {
-    bt.getDiscoveredDevices(
-      (devices) => {
-        console.log(devices);
-        setDiscoveredDeviceList(devices);
-      }
-    );
+    bt.getDiscoveredDevices(devices => {
+      console.log(devices);
+      setDiscoveredDeviceList(devices);
+    });
     setDisable(true);
-  }
+  };
 
   const makeDeviceDiscoverable = () => {
-    bt.makeDeviceDiscoverable(15,
-      (cb) => {
-        console.log(cb);
-      });
+    bt.makeDeviceDiscoverable(15, cb => {
+      console.log(cb);
+    });
     bt.acceptConnection();
-  }
+  };
 
-  const initiateDiscoveredConnection = (deviceAddress) => { bt.initiateDiscoveredConnection(deviceAddress); }
+  const initiateDiscoveredConnection = deviceAddress => {
+    bt.initiateDiscoveredConnection(deviceAddress);
+  };
 
   const renderDiscoveredDeviceList = () => {
-    if (discoveredDeviceList==null) { return; }
+    if (discoveredDeviceList == null) {
+      return;
+    }
     return Object.entries(discoveredDeviceList).map(([key, value]) => {
       return (
         <TouchableOpacity
@@ -83,46 +92,53 @@ const App = () => {
     });
   };
 
-  const renderPairedDeviceList = () => {
-    return Object.entries(deviceList).map(([key, value]) => {
-      return (
-        <TouchableOpacity
-          onPress={() => initiateConnection(key)}
-          style={{
-            backgroundColor: '#153484',
-            marginVertical: 5,
-            marginHorizontal: 10,
-            padding: 10,
-            borderRadius: 20,
-          }}>
-          <View key={key}>
-            <Text style={{color: '#fff'}}>{value}</Text>
-          </View>
-        </TouchableOpacity>
-      );
-    });
-  };
+  // const renderPairedDeviceList = () => {
+  //   return Object.entries(deviceList).map(([key, value]) => {
+  //     return (
+  //       <TouchableOpacity
+  //         onPress={() => initiateConnection(key)}
+  //         style={{
+  //           backgroundColor: '#153484',
+  //           marginVertical: 5,
+  //           marginHorizontal: 10,
+  //           padding: 10,
+  //           borderRadius: 20,
+  //         }}>
+  //         <View key={key}>
+  //           <Text style={{color: '#fff'}}>{value}</Text>
+  //         </View>
+  //       </TouchableOpacity>
+  //     );
+  //   });
+  // };
 
   return (
     <ScrollView>
-      <Button title = {   "Enable Bluetooth"   }  onPress={    enableBluetooth   }  color="#841584"  />
-      {/* <Button title = {  "Get Paired Devices"  }  onPress={   getPairedDevices   } />
-      <Button title = {   "Accept Connection"  }  onPress={   acceptConnection   }  color="#841584"  /> */}
-      {/* <Button title = {   "Receive Message"    }  onPress={      getMessage      } /> */}
-      <Button title=  {   "Start Discovery"    }  onPress={   discoverDevices    } />
-      <Button title=  {  "Make Discoverable"   }  onPress={makeDeviceDiscoverable}  color="#841584"  />
-      <Button title=  {"Get Discovered Devices"}  onPress={ getDiscoveredDevices }  disabled={disable} />
+      <Button
+        title={'Enable Bluetooth'}
+        onPress={enableBluetooth}
+        color="#841584"
+      />
+      <Button title={'Start Discovery'} onPress={discoverDevices} />
+      <Button
+        title={'Make Discoverable'}
+        onPress={makeDeviceDiscoverable}
+        color="#841584"
+      />
+      <Button
+        title={'Get Discovered Devices'}
+        onPress={getDiscoveredDevices}
+        disabled={disable}
+      />
       {renderDiscoveredDeviceList()}
-      {renderPairedDeviceList()}
       <Text>{str}</Text>
       <TextInput
         style={{height: 40}}
         placeholder="Message!"
-        onChangeText={newText =>
-          setText(newText)}
-        value={text} />
-      <Button title="Send Message"
-              onPress={sendMessage} />
+        onChangeText={newText => setText(newText)}
+        value={text}
+      />
+      <Button title="Send Message" onPress={sendMessage} />
     </ScrollView>
   );
 };
