@@ -15,14 +15,17 @@ import android.os.Message;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.Callback;
 import com.facebook.react.bridge.ReactApplicationContext;
+import com.facebook.react.bridge.ReactContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.bridge.WritableNativeMap;
+import com.facebook.react.modules.core.DeviceEventManagerModule;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -109,6 +112,22 @@ public class bt extends ReactContextBaseJavaModule {
         } else {
             Log.d(Constants.TAG,"Not Discovering");
         }
+    }
+
+    private void sendEvent(ReactContext reactContext, String eventName,
+                           @Nullable WritableMap params) {
+        reactContext
+                .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+                .emit(eventName, params);
+    }
+    @ReactMethod
+    public void addListener(String eventName) {
+        // Set up any upstream listeners or background tasks as necessary
+    }
+
+    @ReactMethod
+    public void removeListeners(Integer count) {
+        // Remove upstream listeners, stop unnecessary background tasks
     }
 
     @ReactMethod
@@ -258,6 +277,9 @@ public class bt extends ReactContextBaseJavaModule {
             case Constants.STATE_MESSAGE_RECEIVED:
                 byte[] readBuff = (byte[]) msg.obj;
                 receivedMessage = new String(readBuff,0, msg.arg1);
+                WritableMap params = Arguments.createMap();
+                params.putString("Message", receivedMessage);
+                sendEvent(reactContext, "msgReceiver", params);
                 Log.d(Constants.TAG,receivedMessage); // received Message
                 break;
         }

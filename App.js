@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   NativeEventEmitter,
   NativeModules,
@@ -10,7 +10,7 @@ import {
   ScrollView,
 } from 'react-native';
 
-const App = () => {
+export default function App() {
   const [text, setText] = useState('');
   const [str, setStr] = useState('');
   const [discoveredDeviceList, setDiscoveredDeviceList] = useState({});
@@ -19,16 +19,11 @@ const App = () => {
 
   useEffect(() => {
     const eventEmitter = new NativeEventEmitter(NativeModules.bt);
-    eventListener = eventEmitter.addListener('receivedMessageEvent', e => {
-      console.log(e.message);
+    eventListener = eventEmitter.addListener('msgReceiver', e => {
+      // console.log(e.eventProperty);
+      setStr(e.Message);
     });
   }, []);
-
-  setInterval(() => {
-    bt.getMessage(msg => {
-      setStr(msg);
-    });
-  }, 100);
 
   const enableBluetooth = () => {
     bt.enable(bluetoothStatus => {
@@ -91,8 +86,6 @@ const App = () => {
       );
     });
   };
-
-  // const renderPairedDeviceList = () => {
   //   return Object.entries(deviceList).map(([key, value]) => {
   //     return (
   //       <TouchableOpacity
@@ -118,6 +111,7 @@ const App = () => {
         title={'Enable Bluetooth'}
         onPress={enableBluetooth}
         color="#841584"
+        style={buttonDesign}
       />
       <Button title={'Start Discovery'} onPress={discoverDevices} />
       <Button
@@ -141,6 +135,8 @@ const App = () => {
       <Button title="Send Message" onPress={sendMessage} />
     </ScrollView>
   );
-};
+}
 
-export default App;
+const buttonDesign= {
+
+}
