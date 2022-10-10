@@ -8,51 +8,41 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.Callback;
 import com.facebook.react.bridge.ReactApplicationContext;
+import com.facebook.react.bridge.ReactContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.WritableMap;
-import com.facebook.react.bridge.WritableNativeMap;
+import com.facebook.react.modules.core.DeviceEventManagerModule;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Objects;
-import java.util.Set;
 
 public class bt extends ReactContextBaseJavaModule {
     ReactApplicationContext reactContext;
     BluetoothAdapter bluetoothAdapter;
-    Set<BluetoothDevice> pairedDevices;
-    String connectionStatus = "";
-
-    // For Discovery
-    ArrayList<BluetoothDevice> discoveredDevices;
-    WritableMap reactDiscoveredDevices;
-
+    ArrayList<BluetoothDevice> devices;
     SendReceive sendReceive;
-    String receivedMessage = "";
-
-    private final boolean isGreaterThan12 = Build.VERSION.SDK_INT >= 31;
+    ServerClass server;
+    ClientClass client;
 
     bt(ReactApplicationContext context){
         super(context);
         reactContext = context;
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-        if(!bluetoothAdapter.isEnabled()) {
-            bluetoothAdapter.enable();
-        }
 
         IntentFilter scanIntentFilter = new IntentFilter(BluetoothAdapter.ACTION_SCAN_MODE_CHANGED);
         BroadcastReceiver scanModeReceiver = new BroadcastReceiver() {
@@ -86,11 +76,13 @@ public class bt extends ReactContextBaseJavaModule {
             if(BluetoothDevice.ACTION_FOUND.equals(action)) {
                 BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
                 if(device.getName()!=null) {
-                    discoveredDevices.add(device);
+                    devices.add(device);
                     String deviceName = device.getName();
                     String deviceHardwareAddress = device.getAddress();
-                    Log.d(Constants.TAG, "Found: " + deviceName);
-                    reactDiscoveredDevices.putString(deviceHardwareAddress, deviceName);
+                    WritableMap params = Arguments.createMap();
+                    params.putString("dvcName", deviceName);
+                    params.putString("dvcAddr", deviceHardwareAddress);
+                    sendEvent(reactContext, "dvcFound", params);
                 }
             }
         }
@@ -111,12 +103,13 @@ public class bt extends ReactContextBaseJavaModule {
         }
     }
 
-    @ReactMethod
-    public void enable(){
-        if(!bluetoothAdapter.isEnabled()){
-            bluetoothAdapter.enable();
-        }
+    private void sendEvent(ReactContext reactContext, String eventName, @Nullable WritableMap params) {
+        reactContext
+                .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+                .emit(eventName, params);
     }
+    @ReactMethod public void addListener(String eventName) {}
+    @ReactMethod public void removeListeners(Integer count) {}
 
     @ReactMethod
     public void enable(Callback callback){
@@ -127,54 +120,28 @@ public class bt extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void getPairedDevices(Callback callback) {
-        pairedDevices = bluetoothAdapter.getBondedDevices();
-        WritableNativeMap reactPairedDevices = new WritableNativeMap();
-
-        if (pairedDevices.size() > 0) {
-            for (BluetoothDevice device : pairedDevices) {
-                String deviceName = device.getName();
-                String deviceHardwareAddress = device.getAddress();
-                Log.d(Constants.TAG,deviceName+" "+deviceHardwareAddress);
-                reactPairedDevices.putString(deviceHardwareAddress,deviceName);
+    public void discover(@NonNull Callback callback) {
+            if(!bluetoothAdapter.isEnabled()){
+                bluetoothAdapter.enable();
             }
-        }
-        callback.invoke(reactPairedDevices);
-    }
-
-    @ReactMethod
-    public void doDiscovery(@NonNull Callback callback) {
-        // For discover
-        discoveredDevices = new ArrayList<>();
-        reactDiscoveredDevices = Arguments.createMap();
-
-        // If we're already discovering, stop it
-        cancelDiscovery();
-
-        // Request discover from BluetoothAdapter
-        if(bluetoothAdapter != null && bluetoothAdapter.isEnabled()) {
-            bluetoothAdapter.startDiscovery();
-            if(bluetoothAdapter.isDiscovering()) {
-                callback.invoke("Started Discovery");
-            } else {
-                callback.invoke("Discovery Failed !!!");
+            devices = new ArrayList<>();
+            cancelDiscovery();
+            if (bluetoothAdapter != null && bluetoothAdapter.isEnabled()) {
+                bluetoothAdapter.startDiscovery();
+                if (bluetoothAdapter.isDiscovering()) {
+                    callback.invoke("Discovery [STARTED]");
+                } else {
+                    callback.invoke("Discovery [FAILED]");
+                }
             }
-        } else {
-            callback.invoke("Enable Bluetooth");
-        }
-
-        IntentFilter intentActionFound = new IntentFilter(BluetoothDevice.ACTION_FOUND);
-        reactContext.registerReceiver(discoveryReceiver,intentActionFound);
+            IntentFilter intentActionFound = new IntentFilter(BluetoothDevice.ACTION_FOUND);
+            reactContext.registerReceiver(discoveryReceiver, intentActionFound);
     }
 
     @ReactMethod
-    public void getDiscoveredDevices(@NonNull Callback callback) {
-        cancelDiscovery();
-        callback.invoke(reactDiscoveredDevices);
-    }
-
-    @ReactMethod
-    public void makeDeviceDiscoverable(int duration, @NonNull Callback callback) {
+    public void discoverable(int duration, @NonNull Callback callback) {
+        ServerClass server = new ServerClass();
+        server.start();
         Intent intentDiscoverable = new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
         intentDiscoverable.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION,duration);
         Objects.requireNonNull(getCurrentActivity()).startActivity(intentDiscoverable);
@@ -182,13 +149,15 @@ public class bt extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void initiateDiscoveredConnection(String deviceHardwareAddress) {
-        if (discoveredDevices.size() > 0) {
-            for (BluetoothDevice device : discoveredDevices) {
+    public void connect(String deviceHardwareAddress) {
+        if (devices.size() > 0) {
+            for (BluetoothDevice device : devices) {
                 if (Objects.equals(deviceHardwareAddress, device.getAddress())) {
                     bt.ClientClass client = new bt.ClientClass(device);
                     client.start();
-                    Log.d(Constants.TAG,"Connecting " + device.getName());
+                    WritableMap params = Arguments.createMap();
+                    params.putString("status","Connecting to "+device.getName());
+                    sendEvent(reactContext, "connecting", params);
                     break;
                 }
             }
@@ -196,69 +165,55 @@ public class bt extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void acceptConnection() {
-        ServerClass server = new ServerClass();
+    public void accept() {
+        server = new ServerClass();
         server.start();
     }
 
     @ReactMethod
-    public void initiateConnection(String deviceHardwareAddress) {
-        if (pairedDevices.size() > 0) {
-            for (BluetoothDevice device : pairedDevices) {
-                if (Objects.equals(deviceHardwareAddress, device.getAddress())) {
-                    ClientClass client = new ClientClass(device);
-                    client.start();
-                    Log.d(Constants.TAG,"Connecting " + device.getName());
-                    break;
-                }
-            }
-        }
-    }
-
-    @ReactMethod
-    public void sendMessage(String string) {
+    public void sendMsg(String string) {
         if(sendReceive!=null){
             sendReceive.write(string.getBytes());
         }
     }
 
     @ReactMethod
-    public void getMessage(@NonNull Callback callback) {
-        callback.invoke(receivedMessage);
-    }
-
-    @ReactMethod
-    public void getConnectionStatus(@NonNull Callback callback) {
-        if(bluetoothAdapter.isEnabled()){
-            callback.invoke(connectionStatus);
-        } else {
-            callback.invoke("Bluetooth is off");
+    public void disconnect() {
+        if (sendReceive != null) {
             sendReceive.cancel();
         }
+        if(server != null) {
+            server.cancel();
+        }
+        if(client != null){
+            client.cancel();
+        }
+    }
+
+    public void sendEventHelper(String msg_name, String msg, String eventName) {
+        WritableMap params = Arguments.createMap();
+        params.putString(msg_name, msg);
+        sendEvent(reactContext, eventName, params);
     }
 
     Handler handler = new Handler(Looper.getMainLooper(), msg -> {
         switch (msg.what) {
             case Constants.STATE_LISTENING:
-                connectionStatus = "Status Listening";
-                Log.d(Constants.TAG,connectionStatus);
+                sendEventHelper("status", "Status Listening", "conn");
                 break;
             case Constants.STATE_CONNECTING:
-                connectionStatus = "Status Connecting";
-                Log.d(Constants.TAG,connectionStatus);
+                sendEventHelper("status", "Status Connecting", "conn");
                 break;
             case Constants.STATE_CONNECTED:
-                connectionStatus = "Status Connected";
-                Log.d(Constants.TAG,connectionStatus);
+                sendEventHelper("status", "Status Connected", "conn");
                 break;
             case Constants.STATE_CONNECTION_FAILED:
-                connectionStatus = "Status Connection Failed";
-                Log.d(Constants.TAG,connectionStatus);
+                sendEventHelper("status", "Status Connection Failed", "conn");
                 break;
             case Constants.STATE_MESSAGE_RECEIVED:
                 byte[] readBuff = (byte[]) msg.obj;
-                receivedMessage = new String(readBuff,0, msg.arg1);
-                Log.d(Constants.TAG,receivedMessage); // received Message
+                String rcvdMsg = new String(readBuff,0, msg.arg1);
+                sendEventHelper("msg",rcvdMsg, "rcvr");
                 break;
         }
         return true;
@@ -278,12 +233,11 @@ public class bt extends ReactContextBaseJavaModule {
         public void run() {
             BluetoothSocket socket = null;
 
-            while (socket==null){
+            while (true){
                 try{
                     Message message = Message.obtain();
                     message.what = Constants.STATE_CONNECTING;
                     handler.sendMessage(message);
-
                     socket = serverSocket.accept();
                 } catch (IOException e){
                     e.printStackTrace();
@@ -381,15 +335,13 @@ public class bt extends ReactContextBaseJavaModule {
             while(true) {
                 try {
                     bytes = inputStream.read(buffer);
-
                     handler.obtainMessage(
                             Constants.STATE_MESSAGE_RECEIVED,
                             bytes,-1,buffer).sendToTarget();
-
                     Log.d(Constants.TAG,String.valueOf(bytes)); // received
-
                 } catch (IOException e) {
                     e.printStackTrace();
+                    break;
                 }
             }
         }
@@ -409,6 +361,21 @@ public class bt extends ReactContextBaseJavaModule {
             } catch (IOException e) {
                 Log.e(Constants.TAG, "Could not close the connect socket", e);
             }
+        }
+    }
+
+    @Override
+    public void onCatalystInstanceDestroy() {
+        super.onCatalystInstanceDestroy();
+        Log.d(Constants.TAG, "Destroyed");
+        if (sendReceive != null) {
+            sendReceive.cancel();
+        }
+        if (server != null) {
+            server.cancel();
+        }
+        if (client != null) {
+            client.cancel();
         }
     }
 }
