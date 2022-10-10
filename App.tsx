@@ -14,7 +14,7 @@ import {
 export default function App() {
   const [text, setText] = useState('');
   const [str, setStr] = useState('');
-  const [deviceList, setDeviceList] = useState([])
+  const [deviceList, setDeviceList] = useState([]);
   const {bt} = NativeModules;
 
   useEffect(() => {
@@ -30,33 +30,26 @@ export default function App() {
     })
 
     eventEmitter.addListener('dvcFound', (dvc: any) => {
-      // console.log(dvc);
       let temp = deviceList;
       temp.push(dvc);
       setDeviceList(temp);
     });
-  }, [deviceList]);  
+  }, []);  
 
-  const enable = () => {
+  function enable() {
     bt.enable((bluetoothStatus: any) => {
       console.log(bluetoothStatus);
     });
-  };
+  }
 
-  const sendMsg = () => { bt.sendMsg(text); };
+  function sendMsg() { bt.sendMsg(text); }
 
-  const discover = () => {
-    bt.discover((cb: any) => {
-      console.log(cb);
-    });
-  };
+  function discover() { bt.discover((cb: any) => { console.log(cb) }) }
 
-  const discoverable = () => {
-    bt.discoverable(15, (cb: any) => {
-      console.log(cb);
-    });
+  function discoverable() {
+    bt.discoverable(15, (cb: any) => { console.log(cb) });
     bt.accept();
-  };
+  }
 
   const connect = (deviceAddress: string) => { bt.connect(deviceAddress); };
 
